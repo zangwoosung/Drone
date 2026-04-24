@@ -1,45 +1,31 @@
-name: Unity Windows Build
+name: Automated Build ⭐
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
-
+  push: # Master 브랜치에 Push가 되면 빌드가 되도록 동작시킵니다.
+    branches: [ master ]
+    
 jobs:
-  build:
-    name: Build for Windows Standalone
-    runs-on: ubuntu-latest
-
+  buildWindows:
+    name: 💻 Windows-64 Bit
+    runs-on: windows-latest # 윈도우를 사용합니다.
+    
     steps:
+      # Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           lfs: true
 
-      - name: Free disk space & memory
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          sudo apt-get clean
-          df -h
-
-      - name: Cache Unity Library
-        uses: actions/cache@v4
+      # Cache (캐시파일을 생성하여 다음 빌드시 더 빠르게 빌드를 할 수 있도록 해줍니다.)
+      - uses: actions/cache@v4
         with:
           path: Library
-          key: Library-Windows-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
           restore-keys: |
-            Library-Windows-
             Library-
 
-      - name: Build Unity project
+      # Build
+      - name: Build project
         uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -47,30 +33,9 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           targetPlatform: StandaloneWindows64
-          buildName: MyUnityGame
-          buildsPath: build
-          # ---------------------------------------------------------------
-          # IMPORTANT: Set your exact Unity version here.
-          # Then verify the image exists at:
-          # https://hub.docker.com/r/unityci/editor/tags?name=6000.4
-          #
-          # If 6000.4.3f1 has NO image yet, use the closest available version
-          # shown on Docker Hub (e.g. 6000.0.39f1).
-          #
-          # Also note: newer GameCI images drop the "ubuntu-" prefix.
-          # game-ci/unity-builder@v4 handles this automatically when you
-          # set unityVersion correctly below.
-          # ---------------------------------------------------------------
-          unityVersion: 6000.0.39f1   # <-- Change to your version (check Docker Hub first!)
-          customParameters: >
-            -disable-gpu-skinning
-            -batchmode
-            -nographics
-            -quit
 
-      - name: Upload Windows Build
-        uses: actions/upload-artifact@v4
+      # Output
+      - uses: actions/upload-artifact@v4
         with:
-          name: Windows-Build
-          path: build/StandaloneWindows64
-          retention-days: 14
+          name: Windows Build
+          path: build
