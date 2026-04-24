@@ -6,6 +6,7 @@ public class Drone : MonoBehaviour
     void Start()
     {
         Debug.Log("Drone is ready to fly!");
+        Debug.Log("Drone is ready to fly!");
 
     }
 
