@@ -1,0 +1,54 @@
+name: Unity Windows Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
+
+jobs:
+  build:
+    name: Build for Windows Standalone
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true # Enable if you use Git LFS for large assets
+
+      # 2. Cache Unity Library folder to speed up subsequent builds
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Windows-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-Windows-
+            Library-
+
+      # 3. Build the Unity project using GameCI
+      - name: Build Unity project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: StandaloneWindows64   # 64-bit Windows build
+          buildName: MyUnityGame                # Change this to your game's name
+          buildsPath: build                     # Output folder inside the runner
+          unityVersion: 2022.3.0f1            # Uncomment and set your Unity version
+
+      # 4. Upload the build artifact so you can download it from GitHub
+      - name: Upload Windows Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Build
+          path: build/StandaloneWindows64      # Matches the targetPlatform above
+          retention-days: 14                   # How long to keep the artifact
